@@ -15,7 +15,7 @@
 #include <iostream>
 using namespace std;
 
-int events = 10000;    //max 100000 otherwise my laptop explode!!
+int events = 10;    //max 100000 otherwise my laptop explode!!
 double pi = TMath::Pi();
 
 //trigger 1 (bottom trigger)
@@ -45,9 +45,15 @@ int hmgthTR1 = 0;       //how many generated tracks hitted TR1
 int hmgthL2 = 0;        //how many generated tracks hitted L2
 int hmgthL1 = 0;        //how many generated tracks hitted L1
 int hmgthL0 = 0;        //how many generated tracks hitted L0
+int hmrt = 0;           //how many reco tracks
 double err_cl = 1;      //errore cluster fisso atm but have to change later on
 bool track_generation = true;    //true: generate tracks joining pTR2-qTR1 //false: generate tracks pTR2,theta,phi with appropriate distribution
-
+bool hitL2 = false; 
+bool hitL1 = false;
+bool hitL0 = false;
+vector<vector<double>> clusters_lay2 = {};
+vector<vector<double>> clusters_lay1 = {};
+vector<vector<double>> clusters_lay0 = {};
 
 
 
@@ -59,6 +65,10 @@ void geometry() {
     TView* display = TView::CreateView(1);
     display->SetRange(-100, -100, 0, 100, 100, 70);
     display->ShowAxis();
+    TCanvas* reco = new TCanvas("reco", "3D_View", 800, 600);
+    TView* evreco = TView::CreateView(1);
+    evreco->SetRange(-100, -100, 0, 100, 100, 70);
+    evreco->ShowAxis();
 
     //draw trigger 1
     TMarker3DBox *TR1_0 = new TMarker3DBox(0,0,0,TR1Size[0]/2,TR1Size[1]/2,TR1Size[2]/2,0,0);
@@ -99,6 +109,10 @@ void geometry() {
     TR2_3->SetLineColor(kRed);
     TR2_3->SetLineWidth(3);
     TR2_3->Draw();
+
+    reco->cd();
+    TR1_0->Draw(); TR1_1->Draw(); TR1_2->Draw(); TR1_3->Draw(); TR1_4->Draw(); TR2_0->Draw(); TR2_1->Draw(); TR2_2->Draw(); TR2_3->Draw();
+    geom->cd();
 
     //not sure about the thickness
 
@@ -214,8 +228,6 @@ void geometry() {
     stave1_93->Draw();
     TMarker3DBox *stave1_94 = new TMarker3DBox(2*(ChipSizeX+ChipDistanceX),+(2*ChipStaveDistanceY+2.5*ChipDistanceY+4.5*ChipSizeY),StaveZ[0],ChipSizeX/2,ChipSizeY/2,0,0,0);
     stave1_94->Draw();
-
-
 
     //layer2
     //row0
@@ -443,7 +455,38 @@ void geometry() {
     TMarker3DBox *stave3_94 = new TMarker3DBox(2*(ChipSizeX+ChipDistanceX),+(2*ChipStaveDistanceY+2.5*ChipDistanceY+4.5*ChipSizeY),StaveZ[2],ChipSizeX/2,ChipSizeY/2,0,0,0);
     stave3_94->Draw();
 
-
+    reco->cd();
+    stave1_00->Draw();stave1_01->Draw();stave1_02->Draw();stave1_03->Draw();stave1_04->Draw();
+    stave1_10->Draw();stave1_11->Draw();stave1_12->Draw();stave1_13->Draw();stave1_14->Draw();
+    stave1_20->Draw();stave1_21->Draw();stave1_22->Draw();stave1_23->Draw();stave1_24->Draw();
+    stave1_30->Draw();stave1_31->Draw();stave1_32->Draw();stave1_33->Draw();stave1_34->Draw();
+    stave1_40->Draw();stave1_41->Draw();stave1_42->Draw();stave1_43->Draw();stave1_44->Draw();
+    stave1_50->Draw();stave1_51->Draw();stave1_52->Draw();stave1_53->Draw();stave1_54->Draw();
+    stave1_60->Draw();stave1_61->Draw();stave1_62->Draw();stave1_63->Draw();stave1_64->Draw();
+    stave1_70->Draw();stave1_71->Draw();stave1_72->Draw();stave1_73->Draw();stave1_74->Draw();
+    stave1_80->Draw();stave1_81->Draw();stave1_82->Draw();stave1_83->Draw();stave1_84->Draw();
+    stave1_90->Draw();stave1_91->Draw();stave1_92->Draw();stave1_93->Draw();stave1_94->Draw();
+    stave2_00->Draw();stave2_01->Draw();stave2_02->Draw();stave2_03->Draw();stave2_04->Draw();
+    stave2_10->Draw();stave2_11->Draw();stave2_12->Draw();stave2_13->Draw();stave2_14->Draw();
+    stave2_20->Draw();stave2_21->Draw();stave2_22->Draw();stave2_23->Draw();stave2_24->Draw();
+    stave2_30->Draw();stave2_31->Draw();stave2_32->Draw();stave2_33->Draw();stave2_34->Draw();
+    stave2_40->Draw();stave2_41->Draw();stave2_42->Draw();stave2_43->Draw();stave2_44->Draw();
+    stave2_50->Draw();stave2_51->Draw();stave2_52->Draw();stave2_53->Draw();stave2_54->Draw();
+    stave2_60->Draw();stave2_61->Draw();stave2_62->Draw();stave2_63->Draw();stave2_64->Draw();
+    stave2_70->Draw();stave2_71->Draw();stave2_72->Draw();stave2_73->Draw();stave2_74->Draw();
+    stave2_80->Draw();stave2_81->Draw();stave2_82->Draw();stave2_83->Draw();stave2_84->Draw();
+    stave2_90->Draw();stave2_91->Draw();stave2_92->Draw();stave2_93->Draw();stave2_94->Draw();
+    stave3_00->Draw();stave3_01->Draw();stave3_02->Draw();stave3_03->Draw();stave3_04->Draw();
+    stave3_10->Draw();stave3_11->Draw();stave3_12->Draw();stave3_13->Draw();stave3_14->Draw();
+    stave3_20->Draw();stave3_21->Draw();stave3_22->Draw();stave3_23->Draw();stave3_24->Draw();
+    stave3_30->Draw();stave3_31->Draw();stave3_32->Draw();stave3_33->Draw();stave3_34->Draw();
+    stave3_40->Draw();stave3_41->Draw();stave3_42->Draw();stave3_43->Draw();stave3_44->Draw();
+    stave3_50->Draw();stave3_51->Draw();stave3_52->Draw();stave3_53->Draw();stave3_54->Draw();
+    stave3_60->Draw();stave3_61->Draw();stave3_62->Draw();stave3_63->Draw();stave3_64->Draw();
+    stave3_70->Draw();stave3_71->Draw();stave3_72->Draw();stave3_73->Draw();stave3_74->Draw();
+    stave3_80->Draw();stave3_81->Draw();stave3_82->Draw();stave3_83->Draw();stave3_84->Draw();
+    stave3_90->Draw();stave3_91->Draw();stave3_92->Draw();stave3_93->Draw();stave3_94->Draw();
+    geom->cd();
 
     //TH1F(name, title, nbins, xlow, xup)
     TH1F* hxTR2 = new TH1F("hxTR2", "x_trigger2", events, -TR2Size[0]*2.5, TR2Size[0]*2.5);
@@ -459,13 +502,13 @@ void geometry() {
     TRandom3 *rnd = new TRandom3(10); 
 
     //MC
-    for (int i=0; i < events; i++,hmgt++){
-        double xTR2, yTR2, zTR2, xTR1, yTR1, zTR1, phi, theta;
+    for (int i=0; i < events; i++,hmgt++,hitL2=false,hitL1=false,hitL0=false){
+        double xTR2, yTR2, zTR2, xTR1, yTR1, zTR1, phi, theta; 
+        int size_cl_lay2, size_cl_lay1, size_cl_lay0;
 
         //i layer acquisiscono il segnale quando arriva un segnale AND dagli scintillatori
         //genero traccie misurabili come traccie che passano nei due scintillatori TR2, TR1
         if(track_generation){
-            xTR2 = -100;
             double xTR2_fake = rnd->Uniform(-TR2Size[0]*2,TR2Size[0]*2);     
             if(xTR2_fake>0 && xTR2_fake<TR2Size[0]){xTR2 = xTR2_fake + 0.5*TR2GapX;}
             if(xTR2_fake<0 && xTR2_fake>-TR2Size[0]){xTR2 = xTR2_fake - 0.5*TR2GapX;}
@@ -474,7 +517,6 @@ void geometry() {
             yTR2 = rnd->Uniform(-TR2Size[1]/2,TR2Size[1]/2);
             zTR2 = rnd->Uniform(TR2CenterZ-TR2Thickness/2,TR2CenterZ+TR2Thickness/2);
 
-            yTR1 = -100;
             xTR1 = rnd->Uniform(-TR1Size[0]/2,TR1Size[0]/2);
             double yTR1_fake = rnd->Uniform(-TR1Size[1]*2.5,TR1Size[1]*2.5);     
             if(yTR1_fake<TR1Size[1]/2 && yTR1_fake>-TR1Size[1]/2){yTR1 = yTR1_fake;}
@@ -484,13 +526,14 @@ void geometry() {
             if(yTR1_fake>-2.5*TR1Size[1] && yTR1_fake<-1.5*TR1Size[1]){yTR1 = yTR1_fake - 2*TR1GapY;}
             zTR1 = rnd->Uniform(TR1CenterZ-TR1Thickness/2,TR1CenterZ+TR1Thickness/2);
 
-            phi = TMath::ATan((yTR2-yTR1)/(xTR2-xTR1));
-            theta = TMath::ATan((xTR1-xTR2)/((TMath::Cos(phi))*(zTR2-zTR1)));   
+            //phi = TMath::ATan((yTR2-yTR1)/(xTR2-xTR1));
+            phi = TMath::ATan2((yTR2-yTR1),(xTR2-xTR1));
+            //theta = TMath::ATan((xTR1-xTR2)/((TMath::Cos(phi))*(zTR2-zTR1)));   
+            theta = TMath::ATan2((xTR1-xTR2),((TMath::Cos(phi))*(zTR2-zTR1)));   
 
             hmgthTR1++;
         }  
         if(!track_generation){
-            xTR2 = -100;
             double xTR2_fake = rnd->Uniform(-TR2Size[0]*2,TR2Size[0]*2);     
             if(xTR2_fake>0 && xTR2_fake<TR2Size[0]){xTR2 = xTR2_fake + 0.5*TR2GapX;}
             if(xTR2_fake<0 && xTR2_fake>-TR2Size[0]){xTR2 = xTR2_fake - 0.5*TR2GapX;}
@@ -499,7 +542,7 @@ void geometry() {
             yTR2 = rnd->Uniform(-TR2Size[1]/2,TR2Size[1]/2);
             zTR2 = rnd->Uniform(TR2CenterZ-TR2Thickness/2,TR2CenterZ+TR2Thickness/2);
 
-            phi = rnd->Uniform(pi)-pi/2;
+            phi = rnd->Uniform(2.*pi)-pi;
             double THETA = rnd->Uniform(pi)-pi/2;
             theta = pow(TMath::Cos(THETA),2); 
 
@@ -527,15 +570,6 @@ void geometry() {
         hphi->Fill(phi);
         htheta->Fill(theta);
 
-        //plotting tracks
-        Double_t x_line[2] = {xTR2, xTR1};
-        Double_t y_line[2] = {yTR2, yTR1};
-        Double_t z_line[2] = {zTR2, zTR1};
-        TPolyLine3D* line_track = new TPolyLine3D(2, x_line, y_line, z_line);
-        line_track->SetLineColor(kBlue);
-        line_track->SetLineWidth(2);
-        line_track->Draw();
-
         //calcolimo intersezione con i piani
         double xL2 = xTR2 + (zTR2-StaveZ[2])*(TMath::Sin(theta))*(TMath::Cos(phi))*(1/(TMath::Cos(theta)));
         double yL2 = yTR2 + (zTR2-StaveZ[2])*(TMath::Sin(theta))*(TMath::Sin(phi))*(1/(TMath::Cos(theta)));
@@ -561,6 +595,7 @@ void geometry() {
             (yL2 > -(ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5) && yL2 < -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5)))
         ){
             hmgthL2++;
+            hitL2 = true;
         }
         if((xL1 < ChipSizeX*2.5 + ChipDistanceX && xL1 > -(ChipSizeX*2.5 + ChipDistanceX)) &&
            ((yL1 < ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5 && yL1 > ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5) ||
@@ -575,6 +610,7 @@ void geometry() {
             (yL1 > -(ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5) && yL1 < -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5)))
         ){
             hmgthL1++;
+            hitL1 = true;
         }
         if((xL0 < ChipSizeX*2.5 + ChipDistanceX && xL0 > -(ChipSizeX*2.5 + ChipDistanceX)) &&
            ((yL0 < ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5 && yL0 > ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5) ||
@@ -589,25 +625,79 @@ void geometry() {
             (yL0 > -(ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5) && yL0 < -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5)))
         ){
             hmgthL0++;
+            hitL0 = true;
         }
 
-        /*
+        //plotting tracks
+        Double_t x_line[2] = {xTR2, xTR1};
+        Double_t y_line[2] = {yTR2, yTR1};
+        Double_t z_line[2] = {zTR2, zTR1};
+        TPolyLine3D* line_track = new TPolyLine3D(2, x_line, y_line, z_line);
+        line_track->SetLineColor(kBlue);
+        line_track->SetLineWidth(2);
+        geom->cd();
+        line_track->Draw();
+        reco->cd();
+        line_track->Draw();
+        geom->cd();
+
         TMarker3DBox *err_L2 = new TMarker3DBox(xL2,yL2,zL2,err_cl,err_cl,0,0,0);
         err_L2->SetLineWidth(2);
         err_L2->SetLineColor(kGreen);
-        err_L2->Draw();
-
         TMarker3DBox *err_L1 = new TMarker3DBox(xL1,yL1,zL1,err_cl,err_cl,0,0,0);
         err_L1->SetLineWidth(2);
         err_L1->SetLineColor(kBlue);
-        err_L1->Draw();
-
         TMarker3DBox *err_L0 = new TMarker3DBox(xL0,yL0,zL0,err_cl,err_cl,0,0,0);
         err_L0->SetLineWidth(2);
         err_L0->SetLineColor(kRed);
-        err_L0->Draw();
-        */
+        geom->cd();
+        err_L2->Draw(); err_L1->Draw(); err_L0->Draw();
+        reco->cd();
+        err_L2->Draw(); err_L1->Draw(); err_L0->Draw();
+        geom->cd();
 
+
+        vector<double> cl_lay2 = {xL2, yL2, zL2};
+        vector<double> cl_lay1 = {xL1, yL1, zL1};
+        vector<double> cl_lay0 = {xL0, yL0, zL0};
+        if(hitL2 && hitL1 && hitL0){
+            size_cl_lay2 = clusters_lay2.size();
+            size_cl_lay1 = clusters_lay1.size();
+            size_cl_lay0 = clusters_lay0.size();
+            clusters_lay2.push_back(cl_lay2);
+            clusters_lay1.push_back(cl_lay1);
+            clusters_lay0.push_back(cl_lay0);
+            
+            for(int m=0; m<clusters_lay2.size(); m++){
+                for (int n=0; n<clusters_lay0.size(); n++){
+                    double hp_xL1 = (clusters_lay2[m][0]+clusters_lay0[n][0])/2;
+                    double hp_yL1 = (clusters_lay2[m][1]+clusters_lay0[n][1])/2;
+                    for(int l=0; l<clusters_lay1.size(); l++){
+                        if(hp_xL1 == clusters_lay1[l][0] && hp_yL1 == clusters_lay1[l][1]){
+                            hmrt++;
+                            reco->cd();
+                            Double_t reco_xline[3] = {clusters_lay2[m][0], hp_xL1, clusters_lay0[n][0]};
+                            Double_t reco_yline[3] = {clusters_lay2[m][1], hp_yL1, clusters_lay0[n][1]};
+                            Double_t reco_zline[3] = {zL2, zL1, zL0};
+                            TPolyLine3D* recotr = new TPolyLine3D(3, reco_xline, reco_yline, reco_zline);
+                            recotr->SetLineColor(kBlue);  
+                            recotr->SetLineWidth(2);
+                            recotr->Draw();
+                            TMarker3DBox *err0 = new TMarker3DBox(reco_xline[0], reco_yline[0], reco_zline[0], 0.5, 0.5, 0, 0, 0); 
+                            err0->SetLineColor(kBlack);
+                            err0->Draw();
+                            TMarker3DBox *err1 = new TMarker3DBox(reco_xline[1], reco_yline[1], reco_zline[1], 0.5, 0.5, 0, 0, 0); 
+                            err1->SetLineColor(kBlack);
+                            err1->Draw();
+                            TMarker3DBox *err2 = new TMarker3DBox(reco_xline[2], reco_yline[2], reco_zline[2], 0.5, 0.5, 0, 0, 0);
+                            err2->SetLineColor(kBlack);
+                            err2->Draw();
+                            geom->cd();
+                        }
+                    }
+                }
+            }   
+        }
         
     }
 
@@ -644,6 +734,7 @@ void geometry() {
     cout << "how many generated tracks hitted L2: " << hmgthL2 << endl;
     cout << "how many generated tracks hitted L1: " << hmgthL1 << endl;
     cout << "how many generated tracks hitted L0: " << hmgthL0 << endl;
+    cout << "how many reco tracks: " << hmrt << endl;
 
 
 }
