@@ -15,7 +15,7 @@
 #include <iostream>
 using namespace std;
 
-int events = 100;    //max 100000 otherwise my laptop explode!!
+int events = 10000;    //max 100000 otherwise my laptop explode!!
 double pi = TMath::Pi();
 
 //trigger 1 (bottom trigger)
@@ -41,11 +41,17 @@ static constexpr double ChipStaveDistanceY = 7.22312;
 static constexpr std::array<double, 3> StaveZ = {17.825+TR1CenterZ,17.825+8.5+TR1CenterZ,17.825+17+TR1CenterZ};
 //useful variables
 int hmgt = 0;           //how many generated tracks
+int hmgthTR1 = 0;       //how many generated tracks hitted TR1
 int hmgthL2 = 0;        //how many generated tracks hitted L2
 int hmgthL1 = 0;        //how many generated tracks hitted L1
 int hmgthL0 = 0;        //how many generated tracks hitted L0
 double err_cl = 1;      //errore cluster fisso atm but have to change later on
+bool track_generation = true;    //true: generate tracks joining pTR2-qTR1 //false: generate tracks pTR2,theta,phi with appropriate distribution
 
+
+
+
+//---------------------------------------------------------------------------------------------------------------------------
 
 void geometry() {
 
@@ -454,29 +460,64 @@ void geometry() {
 
     //MC
     for (int i=0; i < events; i++,hmgt++){
+        double xTR2, yTR2, zTR2, xTR1, yTR1, zTR1, phi, theta;
 
         //i layer acquisiscono il segnale quando arriva un segnale AND dagli scintillatori
         //genero traccie misurabili come traccie che passano nei due scintillatori TR2, TR1
-        double xTR2 = -100;
-        double xTR2_fake = rnd->Uniform(-TR2Size[0]*2,TR2Size[0]*2);     
-        if(xTR2_fake>0 && xTR2_fake<TR2Size[0]){xTR2 = xTR2_fake + 0.5*TR2GapX;}
-        if(xTR2_fake<0 && xTR2_fake>-TR2Size[0]){xTR2 = xTR2_fake - 0.5*TR2GapX;}
-        if(xTR2_fake<2*TR2Size[0] && xTR2_fake>TR2Size[0]){xTR2 = xTR2_fake + 1.5*TR2GapX;}
-        if(xTR2_fake>-2*TR2Size[0] && xTR2_fake<-TR2Size[0]){xTR2 = xTR2_fake - 1.5*TR2GapX;}
-        double yTR2 = rnd->Uniform(-TR2Size[1]/2,TR2Size[1]/2);
-        double zTR2 = rnd->Uniform(TR2CenterZ-TR2Thickness/2,TR2CenterZ+TR2Thickness/2);
-        double yTR1 = -100;
-        double xTR1 = rnd->Uniform(-TR1Size[0]/2,TR1Size[0]/2);
-        double yTR1_fake = rnd->Uniform(-TR1Size[1]*2.5,TR1Size[1]*2.5);     
-        if(yTR1_fake<TR1Size[1]/2 && yTR1_fake>-TR1Size[1]/2){yTR1 = yTR1_fake;}
-        if(yTR1_fake<1.5*TR1Size[1] && yTR1_fake>0.5*TR1Size[1]){yTR1 = yTR1_fake + TR1GapY;}
-        if(yTR1_fake<2.5*TR1Size[1] && yTR1_fake>1.5*TR1Size[1]){yTR1 = yTR1_fake + 2*TR1GapY;}
-        if(yTR1_fake>-1.5*TR1Size[1] && yTR1_fake<-0.5*TR1Size[1]){yTR1 = yTR1_fake - TR1GapY;}
-        if(yTR1_fake>-2.5*TR1Size[1] && yTR1_fake<-1.5*TR1Size[1]){yTR1 = yTR1_fake - 2*TR1GapY;}
-        double zTR1 = rnd->Uniform(TR1CenterZ-TR1Thickness/2,TR1CenterZ+TR1Thickness/2);
-        double phi = TMath::ATan((yTR2-yTR1)/(xTR2-xTR1));
-        double theta = TMath::ATan((xTR1-xTR2)/((TMath::Cos(phi))*(zTR2-zTR1)));        
+        if(track_generation){
+            xTR2 = -100;
+            double xTR2_fake = rnd->Uniform(-TR2Size[0]*2,TR2Size[0]*2);     
+            if(xTR2_fake>0 && xTR2_fake<TR2Size[0]){xTR2 = xTR2_fake + 0.5*TR2GapX;}
+            if(xTR2_fake<0 && xTR2_fake>-TR2Size[0]){xTR2 = xTR2_fake - 0.5*TR2GapX;}
+            if(xTR2_fake<2*TR2Size[0] && xTR2_fake>TR2Size[0]){xTR2 = xTR2_fake + 1.5*TR2GapX;}
+            if(xTR2_fake>-2*TR2Size[0] && xTR2_fake<-TR2Size[0]){xTR2 = xTR2_fake - 1.5*TR2GapX;}
+            yTR2 = rnd->Uniform(-TR2Size[1]/2,TR2Size[1]/2);
+            zTR2 = rnd->Uniform(TR2CenterZ-TR2Thickness/2,TR2CenterZ+TR2Thickness/2);
 
+            yTR1 = -100;
+            xTR1 = rnd->Uniform(-TR1Size[0]/2,TR1Size[0]/2);
+            double yTR1_fake = rnd->Uniform(-TR1Size[1]*2.5,TR1Size[1]*2.5);     
+            if(yTR1_fake<TR1Size[1]/2 && yTR1_fake>-TR1Size[1]/2){yTR1 = yTR1_fake;}
+            if(yTR1_fake<1.5*TR1Size[1] && yTR1_fake>0.5*TR1Size[1]){yTR1 = yTR1_fake + TR1GapY;}
+            if(yTR1_fake<2.5*TR1Size[1] && yTR1_fake>1.5*TR1Size[1]){yTR1 = yTR1_fake + 2*TR1GapY;}
+            if(yTR1_fake>-1.5*TR1Size[1] && yTR1_fake<-0.5*TR1Size[1]){yTR1 = yTR1_fake - TR1GapY;}
+            if(yTR1_fake>-2.5*TR1Size[1] && yTR1_fake<-1.5*TR1Size[1]){yTR1 = yTR1_fake - 2*TR1GapY;}
+            zTR1 = rnd->Uniform(TR1CenterZ-TR1Thickness/2,TR1CenterZ+TR1Thickness/2);
+
+            phi = TMath::ATan((yTR2-yTR1)/(xTR2-xTR1));
+            theta = TMath::ATan((xTR1-xTR2)/((TMath::Cos(phi))*(zTR2-zTR1)));   
+
+            hmgthTR1++;
+        }  
+        if(!track_generation){
+            xTR2 = -100;
+            double xTR2_fake = rnd->Uniform(-TR2Size[0]*2,TR2Size[0]*2);     
+            if(xTR2_fake>0 && xTR2_fake<TR2Size[0]){xTR2 = xTR2_fake + 0.5*TR2GapX;}
+            if(xTR2_fake<0 && xTR2_fake>-TR2Size[0]){xTR2 = xTR2_fake - 0.5*TR2GapX;}
+            if(xTR2_fake<2*TR2Size[0] && xTR2_fake>TR2Size[0]){xTR2 = xTR2_fake + 1.5*TR2GapX;}
+            if(xTR2_fake>-2*TR2Size[0] && xTR2_fake<-TR2Size[0]){xTR2 = xTR2_fake - 1.5*TR2GapX;}
+            yTR2 = rnd->Uniform(-TR2Size[1]/2,TR2Size[1]/2);
+            zTR2 = rnd->Uniform(TR2CenterZ-TR2Thickness/2,TR2CenterZ+TR2Thickness/2);
+
+            phi = rnd->Uniform(pi)-pi/2;
+            double THETA = rnd->Uniform(pi)-pi/2;
+            theta = pow(TMath::Cos(THETA),2); 
+
+            xTR1 = xTR2 + (zTR2-TR1CenterZ)*(TMath::Sin(theta))*(TMath::Cos(phi))*(1/(TMath::Cos(theta)));
+            yTR1 = yTR2 + (zTR2-TR1CenterZ)*(TMath::Sin(theta))*(TMath::Sin(phi)*(1/(TMath::Cos(theta))));
+            //check how many tracks hitted TR1
+            if(xTR1 < TR1Size[0]/2 && xTR1 > -TR1Size[0]/2 &&
+                (
+                    (yTR1 < (2.5*TR1Size[1]+2*TR1GapY) && yTR1 > (1.5*TR1Size[1]+2*TR1GapY)) ||
+                    (yTR1 < (1.5*TR1Size[1]+1*TR1GapY) && yTR1 > (0.5*TR1Size[1]+1*TR1GapY)) ||
+                    (yTR1 < (0.5*TR1Size[1]+0*TR1GapY) && yTR1 > -(0.5*TR1Size[1]+0*TR1GapY)) ||
+                    (yTR1 < -(0.5*TR1Size[1]+1*TR1GapY) && yTR1 > -(1.5*TR1Size[1]+1*TR1GapY)) ||
+                    (yTR1 < -(1.5*TR1Size[1]+2*TR1GapY) && yTR1 > -(2.5*TR1Size[1]+2*TR1GapY)) 
+                )
+              ){
+                hmgthTR1++;
+            }
+        }
         hxTR2->Fill(xTR2);
         hyTR2->Fill(yTR2);
         hzTR2->Fill(zTR2);
@@ -486,6 +527,7 @@ void geometry() {
         hphi->Fill(phi);
         htheta->Fill(theta);
 
+        //plotting tracks
         Double_t x_line[2] = {xTR2, xTR1};
         Double_t y_line[2] = {yTR2, yTR1};
         Double_t z_line[2] = {zTR2, zTR1};
@@ -507,44 +549,44 @@ void geometry() {
 
         //check if the track hitted the staves in layer 2
         if((xL2 < ChipSizeX*2.5 + ChipDistanceX && xL2 > -(ChipSizeX*2.5 + ChipDistanceX)) &&
-           (yL2 < ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5 && yL2 > ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5 ||
-            yL2 < ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*1.5 && yL2 > ChipSizeY*3 + ChipStaveDistanceY*2 + ChipDistanceY*1.5 ||
-            yL2 < ChipSizeY*3 + ChipStaveDistanceY*1 + ChipDistanceY*1.5 && yL2 > ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*1.5 ||
-            yL2 < ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*0.5 && yL2 > ChipSizeY*1 + ChipStaveDistanceY*1 + ChipDistanceY*0.5 ||
-            yL2 < ChipSizeY*1 + ChipStaveDistanceY*0 + ChipDistanceY*0.5 && yL2 > ChipSizeY*0 + ChipStaveDistanceY*0 + ChipDistanceY*0.5 ||
-            yL2 > -(ChipSizeY*1 + ChipStaveDistanceY*0 + ChipDistanceY*0.5) && yL2 < -(ChipSizeY*0 + ChipStaveDistanceY*0 + ChipDistanceY*0.5) ||
-            yL2 > -(ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*0.5) && yL2 < -(ChipSizeY*1 + ChipStaveDistanceY*1 + ChipDistanceY*0.5) ||
-            yL2 > -(ChipSizeY*3 + ChipStaveDistanceY*1 + ChipDistanceY*1.5) && yL2 < -(ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*1.5) ||
-            yL2 > -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*1.5) && yL2 < -(ChipSizeY*3 + ChipStaveDistanceY*2 + ChipDistanceY*1.5) ||
-            yL2 > -(ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5) && yL2 < -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5))
+           ((yL2 < ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5 && yL2 > ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5) ||
+            (yL2 < ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*1.5 && yL2 > ChipSizeY*3 + ChipStaveDistanceY*2 + ChipDistanceY*1.5) ||
+            (yL2 < ChipSizeY*3 + ChipStaveDistanceY*1 + ChipDistanceY*1.5 && yL2 > ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*1.5) ||
+            (yL2 < ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*0.5 && yL2 > ChipSizeY*1 + ChipStaveDistanceY*1 + ChipDistanceY*0.5) ||
+            (yL2 < ChipSizeY*1 + ChipStaveDistanceY*0 + ChipDistanceY*0.5 && yL2 > ChipSizeY*0 + ChipStaveDistanceY*0 + ChipDistanceY*0.5) ||
+            (yL2 > -(ChipSizeY*1 + ChipStaveDistanceY*0 + ChipDistanceY*0.5) && yL2 < -(ChipSizeY*0 + ChipStaveDistanceY*0 + ChipDistanceY*0.5)) ||
+            (yL2 > -(ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*0.5) && yL2 < -(ChipSizeY*1 + ChipStaveDistanceY*1 + ChipDistanceY*0.5)) ||
+            (yL2 > -(ChipSizeY*3 + ChipStaveDistanceY*1 + ChipDistanceY*1.5) && yL2 < -(ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*1.5)) ||
+            (yL2 > -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*1.5) && yL2 < -(ChipSizeY*3 + ChipStaveDistanceY*2 + ChipDistanceY*1.5)) ||
+            (yL2 > -(ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5) && yL2 < -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5)))
         ){
             hmgthL2++;
         }
         if((xL1 < ChipSizeX*2.5 + ChipDistanceX && xL1 > -(ChipSizeX*2.5 + ChipDistanceX)) &&
-           (yL1 < ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5 && yL1 > ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5 ||
-            yL1 < ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*1.5 && yL1 > ChipSizeY*3 + ChipStaveDistanceY*2 + ChipDistanceY*1.5 ||
-            yL1 < ChipSizeY*3 + ChipStaveDistanceY*1 + ChipDistanceY*1.5 && yL1 > ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*1.5 ||
-            yL1 < ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*0.5 && yL1 > ChipSizeY*1 + ChipStaveDistanceY*1 + ChipDistanceY*0.5 ||
-            yL1 < ChipSizeY*1 + ChipStaveDistanceY*0 + ChipDistanceY*0.5 && yL1 > ChipSizeY*0 + ChipStaveDistanceY*0 + ChipDistanceY*0.5 ||
-            yL1 > -(ChipSizeY*1 + ChipStaveDistanceY*0 + ChipDistanceY*0.5) && yL1 < -(ChipSizeY*0 + ChipStaveDistanceY*0 + ChipDistanceY*0.5) ||
-            yL1 > -(ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*0.5) && yL1 < -(ChipSizeY*1 + ChipStaveDistanceY*1 + ChipDistanceY*0.5) ||
-            yL1 > -(ChipSizeY*3 + ChipStaveDistanceY*1 + ChipDistanceY*1.5) && yL1 < -(ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*1.5) ||
-            yL1 > -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*1.5) && yL1 < -(ChipSizeY*3 + ChipStaveDistanceY*2 + ChipDistanceY*1.5) ||
-            yL1 > -(ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5) && yL1 < -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5))
+           ((yL1 < ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5 && yL1 > ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5) ||
+            (yL1 < ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*1.5 && yL1 > ChipSizeY*3 + ChipStaveDistanceY*2 + ChipDistanceY*1.5) ||
+            (yL1 < ChipSizeY*3 + ChipStaveDistanceY*1 + ChipDistanceY*1.5 && yL1 > ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*1.5) ||
+            (yL1 < ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*0.5 && yL1 > ChipSizeY*1 + ChipStaveDistanceY*1 + ChipDistanceY*0.5) ||
+            (yL1 < ChipSizeY*1 + ChipStaveDistanceY*0 + ChipDistanceY*0.5 && yL1 > ChipSizeY*0 + ChipStaveDistanceY*0 + ChipDistanceY*0.5) ||
+            (yL1 > -(ChipSizeY*1 + ChipStaveDistanceY*0 + ChipDistanceY*0.5) && yL1 < -(ChipSizeY*0 + ChipStaveDistanceY*0 + ChipDistanceY*0.5)) ||
+            (yL1 > -(ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*0.5) && yL1 < -(ChipSizeY*1 + ChipStaveDistanceY*1 + ChipDistanceY*0.5)) ||
+            (yL1 > -(ChipSizeY*3 + ChipStaveDistanceY*1 + ChipDistanceY*1.5) && yL1 < -(ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*1.5)) ||
+            (yL1 > -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*1.5) && yL1 < -(ChipSizeY*3 + ChipStaveDistanceY*2 + ChipDistanceY*1.5)) ||
+            (yL1 > -(ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5) && yL1 < -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5)))
         ){
             hmgthL1++;
         }
         if((xL0 < ChipSizeX*2.5 + ChipDistanceX && xL0 > -(ChipSizeX*2.5 + ChipDistanceX)) &&
-           (yL0 < ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5 && yL0 > ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5 ||
-            yL0 < ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*1.5 && yL0 > ChipSizeY*3 + ChipStaveDistanceY*2 + ChipDistanceY*1.5 ||
-            yL0 < ChipSizeY*3 + ChipStaveDistanceY*1 + ChipDistanceY*1.5 && yL0 > ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*1.5 ||
-            yL0 < ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*0.5 && yL0 > ChipSizeY*1 + ChipStaveDistanceY*1 + ChipDistanceY*0.5 ||
-            yL0 < ChipSizeY*1 + ChipStaveDistanceY*0 + ChipDistanceY*0.5 && yL0 > ChipSizeY*0 + ChipStaveDistanceY*0 + ChipDistanceY*0.5 ||
-            yL0 > -(ChipSizeY*1 + ChipStaveDistanceY*0 + ChipDistanceY*0.5) && yL0 < -(ChipSizeY*0 + ChipStaveDistanceY*0 + ChipDistanceY*0.5) ||
-            yL0 > -(ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*0.5) && yL0 < -(ChipSizeY*1 + ChipStaveDistanceY*1 + ChipDistanceY*0.5) ||
-            yL0 > -(ChipSizeY*3 + ChipStaveDistanceY*1 + ChipDistanceY*1.5) && yL0 < -(ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*1.5) ||
-            yL0 > -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*1.5) && yL0 < -(ChipSizeY*3 + ChipStaveDistanceY*2 + ChipDistanceY*1.5) ||
-            yL0 > -(ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5) && yL0 < -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5))
+           ((yL0 < ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5 && yL0 > ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5) ||
+            (yL0 < ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*1.5 && yL0 > ChipSizeY*3 + ChipStaveDistanceY*2 + ChipDistanceY*1.5) ||
+            (yL0 < ChipSizeY*3 + ChipStaveDistanceY*1 + ChipDistanceY*1.5 && yL0 > ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*1.5) ||
+            (yL0 < ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*0.5 && yL0 > ChipSizeY*1 + ChipStaveDistanceY*1 + ChipDistanceY*0.5) ||
+            (yL0 < ChipSizeY*1 + ChipStaveDistanceY*0 + ChipDistanceY*0.5 && yL0 > ChipSizeY*0 + ChipStaveDistanceY*0 + ChipDistanceY*0.5) ||
+            (yL0 > -(ChipSizeY*1 + ChipStaveDistanceY*0 + ChipDistanceY*0.5) && yL0 < -(ChipSizeY*0 + ChipStaveDistanceY*0 + ChipDistanceY*0.5)) ||
+            (yL0 > -(ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*0.5) && yL0 < -(ChipSizeY*1 + ChipStaveDistanceY*1 + ChipDistanceY*0.5)) ||
+            (yL0 > -(ChipSizeY*3 + ChipStaveDistanceY*1 + ChipDistanceY*1.5) && yL0 < -(ChipSizeY*2 + ChipStaveDistanceY*1 + ChipDistanceY*1.5)) ||
+            (yL0 > -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*1.5) && yL0 < -(ChipSizeY*3 + ChipStaveDistanceY*2 + ChipDistanceY*1.5)) ||
+            (yL0 > -(ChipSizeY*5 + ChipStaveDistanceY*2 + ChipDistanceY*2.5) && yL0 < -(ChipSizeY*4 + ChipStaveDistanceY*2 + ChipDistanceY*2.5)))
         ){
             hmgthL0++;
         }
@@ -586,12 +628,19 @@ void geometry() {
     htheta->Write();
     f.Close();
 
-    double phi_max = pi/2;
-    double phi_thetamax = TMath::ATan((-TR2Size[1]-(2.5*TR1Size[1]+2*TR1GapY))/(-(2*TR2Size[0]+1.5*TR2GapX)-TR1Size[0]/2));
-    double theta_max = TMath::ATan((-(-(2*TR2Size[0]+1.5*TR2GapX)-TR1Size[0]/2))/(TMath::Cos(phi_thetamax)*(TR2CenterZ+TR2Size[2]/2)-TR1CenterZ-TR1Size[2]/2));
-    cout << "angolo phi max: " << phi_max << endl;
-    cout << "angolo theta max: " << theta_max << endl;
+    //double phi_max = pi/2;
+    //double phi_thetamax = TMath::ATan((-TR2Size[1]-(2.5*TR1Size[1]+2*TR1GapY))/(-(2*TR2Size[0]+1.5*TR2GapX)-TR1Size[0]/2));
+    //double theta_max = TMath::ATan((-(-(2*TR2Size[0]+1.5*TR2GapX)-TR1Size[0]/2))/(TMath::Cos(phi_thetamax)*(TR2CenterZ+TR2Size[2]/2)-TR1CenterZ-TR1Size[2]/2));
+    if(track_generation){
+        cout << "GENERIAMO LE TRACK UNENDO pTR2-qTR1" << endl;
+    }
+    if(!track_generation){
+        cout << "GENERIAMO LE TRACK DA pTR2 CON DISTRIBUZIONE DEGLI ANGOLI" << endl;
+    }
+    //cout << "angolo phi max: " << phi_max << endl;
+    //cout << "angolo theta max: " << theta_max << endl;
     cout << "how many generated tracks: " << hmgt << endl;
+    cout << "how many generated tracks hitted TR1: " << hmgthTR1 << endl;
     cout << "how many generated tracks hitted L2: " << hmgthL2 << endl;
     cout << "how many generated tracks hitted L1: " << hmgthL1 << endl;
     cout << "how many generated tracks hitted L0: " << hmgthL0 << endl;
