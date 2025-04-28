@@ -15,7 +15,7 @@
 #include <iostream>
 using namespace std;
 
-int events = 10;    //max 100000 otherwise my laptop explode!!
+int events = 30;    //max 100000 otherwise my laptop explode!!
 double pi = TMath::Pi();
 
 //trigger 1 (bottom trigger)
