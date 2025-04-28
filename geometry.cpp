@@ -15,8 +15,9 @@
 #include <iostream>
 using namespace std;
 
-int events = 30;    //max 100000 otherwise my laptop explode!!
-double pi = TMath::Pi();
+int events = 30;    //max 100000 otherwise my laptop explode!!  //now with 1000 starts to struggle
+//puoi settare il seed for reproducibility
+TRandom3 *rnd = new TRandom3(10); 
 
 //trigger 1 (bottom trigger)
 static constexpr double TR1CenterZ = 0.;
@@ -40,20 +41,22 @@ static constexpr double ChipDistanceY = 0.150;
 static constexpr double ChipStaveDistanceY = 7.22312;
 static constexpr std::array<double, 3> StaveZ = {17.825+TR1CenterZ,17.825+8.5+TR1CenterZ,17.825+17+TR1CenterZ};
 //useful variables
-int hmgt = 0;           //how many generated tracks
-int hmgthTR1 = 0;       //how many generated tracks hitted TR1
-int hmgthL2 = 0;        //how many generated tracks hitted L2
-int hmgthL1 = 0;        //how many generated tracks hitted L1
-int hmgthL0 = 0;        //how many generated tracks hitted L0
-int hmrt = 0;           //how many reco tracks
+double pi = TMath::Pi();
+double hmgt = 0;           //how many generated tracks
+double hmgthTR1 = 0;       //how many generated tracks hitted TR1
+double hmgthL2 = 0;        //how many generated tracks hitted L2
+double hmgthL1 = 0;        //how many generated tracks hitted L1
+double hmgthL0 = 0;        //how many generated tracks hitted L0
+double hmrt = 0;           //how many reco tracks
+double hmgthL012 = 0;      //how many generated tracks hitted all 3 layers
 double err_cl = 1;      //errore cluster fisso atm but have to change later on
 bool track_generation = true;    //true: generate tracks joining pTR2-qTR1 //false: generate tracks pTR2,theta,phi with appropriate distribution
 bool hitL2 = false; 
 bool hitL1 = false;
 bool hitL0 = false;
-vector<vector<double>> clusters_lay2 = {};
-vector<vector<double>> clusters_lay1 = {};
-vector<vector<double>> clusters_lay0 = {};
+vector<vector<double>> clusters_lay2 = {};     //insieme di tutti i cluster presenti sul layer 2
+vector<vector<double>> clusters_lay1 = {};     //insieme di tutti i cluster presenti sul layer 1
+vector<vector<double>> clusters_lay0 = {};     //insieme di tutti i cluster presenti sul layer 0
 
 
 
@@ -70,6 +73,7 @@ void geometry() {
     evreco->SetRange(-100, -100, 0, 100, 100, 70);
     evreco->ShowAxis();
 
+    geom->cd();
     //draw trigger 1
     TMarker3DBox *TR1_0 = new TMarker3DBox(0,0,0,TR1Size[0]/2,TR1Size[1]/2,TR1Size[2]/2,0,0);
     TR1_0->SetLineColor(kRed);
@@ -109,10 +113,6 @@ void geometry() {
     TR2_3->SetLineColor(kRed);
     TR2_3->SetLineWidth(3);
     TR2_3->Draw();
-
-    reco->cd();
-    TR1_0->Draw(); TR1_1->Draw(); TR1_2->Draw(); TR1_3->Draw(); TR1_4->Draw(); TR2_0->Draw(); TR2_1->Draw(); TR2_2->Draw(); TR2_3->Draw();
-    geom->cd();
 
     //not sure about the thickness
 
@@ -486,6 +486,37 @@ void geometry() {
     stave3_70->Draw();stave3_71->Draw();stave3_72->Draw();stave3_73->Draw();stave3_74->Draw();
     stave3_80->Draw();stave3_81->Draw();stave3_82->Draw();stave3_83->Draw();stave3_84->Draw();
     stave3_90->Draw();stave3_91->Draw();stave3_92->Draw();stave3_93->Draw();stave3_94->Draw();
+    
+    stave1_00->SetLineWidth(2);stave1_01->SetLineWidth(2);stave1_02->SetLineWidth(2);stave1_03->SetLineWidth(2);stave1_04->SetLineWidth(2);
+    stave1_10->SetLineWidth(2);stave1_11->SetLineWidth(2);stave1_12->SetLineWidth(2);stave1_13->SetLineWidth(2);stave1_14->SetLineWidth(2);
+    stave1_20->SetLineWidth(2);stave1_21->SetLineWidth(2);stave1_22->SetLineWidth(2);stave1_23->SetLineWidth(2);stave1_24->SetLineWidth(2);
+    stave1_30->SetLineWidth(2);stave1_31->SetLineWidth(2);stave1_32->SetLineWidth(2);stave1_33->SetLineWidth(2);stave1_34->SetLineWidth(2);
+    stave1_40->SetLineWidth(2);stave1_41->SetLineWidth(2);stave1_42->SetLineWidth(2);stave1_43->SetLineWidth(2);stave1_44->SetLineWidth(2);
+    stave1_50->SetLineWidth(2);stave1_51->SetLineWidth(2);stave1_52->SetLineWidth(2);stave1_53->SetLineWidth(2);stave1_54->SetLineWidth(2);
+    stave1_60->SetLineWidth(2);stave1_61->SetLineWidth(2);stave1_62->SetLineWidth(2);stave1_63->SetLineWidth(2);stave1_64->SetLineWidth(2);
+    stave1_70->SetLineWidth(2);stave1_71->SetLineWidth(2);stave1_72->SetLineWidth(2);stave1_73->SetLineWidth(2);stave1_74->SetLineWidth(2);
+    stave1_80->SetLineWidth(2);stave1_81->SetLineWidth(2);stave1_82->SetLineWidth(2);stave1_83->SetLineWidth(2);stave1_84->SetLineWidth(2);
+    stave1_90->SetLineWidth(2);stave1_91->SetLineWidth(2);stave1_92->SetLineWidth(2);stave1_93->SetLineWidth(2);stave1_94->SetLineWidth(2);
+    stave2_00->SetLineWidth(2);stave2_01->SetLineWidth(2);stave2_02->SetLineWidth(2);stave2_03->SetLineWidth(2);stave2_04->SetLineWidth(2);
+    stave2_10->SetLineWidth(2);stave2_11->SetLineWidth(2);stave2_12->SetLineWidth(2);stave2_13->SetLineWidth(2);stave2_14->SetLineWidth(2);
+    stave2_20->SetLineWidth(2);stave2_21->SetLineWidth(2);stave2_22->SetLineWidth(2);stave2_23->SetLineWidth(2);stave2_24->SetLineWidth(2);
+    stave2_30->SetLineWidth(2);stave2_31->SetLineWidth(2);stave2_32->SetLineWidth(2);stave2_33->SetLineWidth(2);stave2_34->SetLineWidth(2);
+    stave2_40->SetLineWidth(2);stave2_41->SetLineWidth(2);stave2_42->SetLineWidth(2);stave2_43->SetLineWidth(2);stave2_44->SetLineWidth(2);
+    stave2_50->SetLineWidth(2);stave2_51->SetLineWidth(2);stave2_52->SetLineWidth(2);stave2_53->SetLineWidth(2);stave2_54->SetLineWidth(2);
+    stave2_60->SetLineWidth(2);stave2_61->SetLineWidth(2);stave2_62->SetLineWidth(2);stave2_63->SetLineWidth(2);stave2_64->SetLineWidth(2);
+    stave2_70->SetLineWidth(2);stave2_71->SetLineWidth(2);stave2_72->SetLineWidth(2);stave2_73->SetLineWidth(2);stave2_74->SetLineWidth(2);
+    stave2_80->SetLineWidth(2);stave2_81->SetLineWidth(2);stave2_82->SetLineWidth(2);stave2_83->SetLineWidth(2);stave2_84->SetLineWidth(2);
+    stave2_90->SetLineWidth(2);stave2_91->SetLineWidth(2);stave2_92->SetLineWidth(2);stave2_93->SetLineWidth(2);stave2_94->SetLineWidth(2);
+    stave3_00->SetLineWidth(2);stave3_01->SetLineWidth(2);stave3_02->SetLineWidth(2);stave3_03->SetLineWidth(2);stave3_04->SetLineWidth(2);
+    stave3_10->SetLineWidth(2);stave3_11->SetLineWidth(2);stave3_12->SetLineWidth(2);stave3_13->SetLineWidth(2);stave3_14->SetLineWidth(2);
+    stave3_20->SetLineWidth(2);stave3_21->SetLineWidth(2);stave3_22->SetLineWidth(2);stave3_23->SetLineWidth(2);stave3_24->SetLineWidth(2);
+    stave3_30->SetLineWidth(2);stave3_31->SetLineWidth(2);stave3_32->SetLineWidth(2);stave3_33->SetLineWidth(2);stave3_34->SetLineWidth(2);
+    stave3_40->SetLineWidth(2);stave3_41->SetLineWidth(2);stave3_42->SetLineWidth(2);stave3_43->SetLineWidth(2);stave3_44->SetLineWidth(2);
+    stave3_50->SetLineWidth(2);stave3_51->SetLineWidth(2);stave3_52->SetLineWidth(2);stave3_53->SetLineWidth(2);stave3_54->SetLineWidth(2);
+    stave3_60->SetLineWidth(2);stave3_61->SetLineWidth(2);stave3_62->SetLineWidth(2);stave3_63->SetLineWidth(2);stave3_64->SetLineWidth(2);
+    stave3_70->SetLineWidth(2);stave3_71->SetLineWidth(2);stave3_72->SetLineWidth(2);stave3_73->SetLineWidth(2);stave3_74->SetLineWidth(2);
+    stave3_80->SetLineWidth(2);stave3_81->SetLineWidth(2);stave3_82->SetLineWidth(2);stave3_83->SetLineWidth(2);stave3_84->SetLineWidth(2);
+    stave3_90->SetLineWidth(2);stave3_91->SetLineWidth(2);stave3_92->SetLineWidth(2);stave3_93->SetLineWidth(2);stave3_94->SetLineWidth(2);
     geom->cd();
 
     //TH1F(name, title, nbins, xlow, xup)
@@ -498,13 +529,9 @@ void geometry() {
     TH1F* hphi = new TH1F("hphi", "phi", events, -pi, pi);
     TH1F* htheta = new TH1F("htheta", "theta", events, -pi/2, pi/2);
 
-    //puoi settare il seed for reproducibility
-    TRandom3 *rnd = new TRandom3(10); 
-
     //MC
-    for (int i=0; i < events; i++,hmgt++,hitL2=false,hitL1=false,hitL0=false){
+    for (int i=0; i < events; i++,hmgt++,hitL2=false,hitL1=false,hitL0=false,clusters_lay2.clear(),clusters_lay1.clear(),clusters_lay0.clear()){
         double xTR2, yTR2, zTR2, xTR1, yTR1, zTR1, phi, theta; 
-        int size_cl_lay2, size_cl_lay1, size_cl_lay0;
 
         //i layer acquisiscono il segnale quando arriva un segnale AND dagli scintillatori
         //genero traccie misurabili come traccie che passano nei due scintillatori TR2, TR1
@@ -526,9 +553,8 @@ void geometry() {
             if(yTR1_fake>-2.5*TR1Size[1] && yTR1_fake<-1.5*TR1Size[1]){yTR1 = yTR1_fake - 2*TR1GapY;}
             zTR1 = rnd->Uniform(TR1CenterZ-TR1Thickness/2,TR1CenterZ+TR1Thickness/2);
 
-            //phi = TMath::ATan((yTR2-yTR1)/(xTR2-xTR1));
+            //uso ATan2 instead of ATan to avoid losing information
             phi = TMath::ATan2((yTR2-yTR1),(xTR2-xTR1));
-            //theta = TMath::ATan((xTR1-xTR2)/((TMath::Cos(phi))*(zTR2-zTR1)));   
             theta = TMath::ATan2((xTR1-xTR2),((TMath::Cos(phi))*(zTR2-zTR1)));   
 
             hmgthTR1++;
@@ -637,9 +663,6 @@ void geometry() {
         line_track->SetLineWidth(2);
         geom->cd();
         line_track->Draw();
-        reco->cd();
-        line_track->Draw();
-        geom->cd();
 
         TMarker3DBox *err_L2 = new TMarker3DBox(xL2,yL2,zL2,err_cl,err_cl,0,0,0);
         err_L2->SetLineWidth(2);
@@ -661,37 +684,34 @@ void geometry() {
         vector<double> cl_lay1 = {xL1, yL1, zL1};
         vector<double> cl_lay0 = {xL0, yL0, zL0};
         if(hitL2 && hitL1 && hitL0){
-            size_cl_lay2 = clusters_lay2.size();
-            size_cl_lay1 = clusters_lay1.size();
-            size_cl_lay0 = clusters_lay0.size();
             clusters_lay2.push_back(cl_lay2);
             clusters_lay1.push_back(cl_lay1);
             clusters_lay0.push_back(cl_lay0);
+            hmgthL012++;
             
             for(int m=0; m<clusters_lay2.size(); m++){
                 for (int n=0; n<clusters_lay0.size(); n++){
+                    //questo metodo molto grezzo funziona solo sotto l'ipotesi che le distanze tra i layer21 e layer 10 sono uguali! (spoiler: lo sono)
                     double hp_xL1 = (clusters_lay2[m][0]+clusters_lay0[n][0])/2;
                     double hp_yL1 = (clusters_lay2[m][1]+clusters_lay0[n][1])/2;
                     for(int l=0; l<clusters_lay1.size(); l++){
                         if(hp_xL1 == clusters_lay1[l][0] && hp_yL1 == clusters_lay1[l][1]){
-                            hmrt++;
-                            reco->cd();
+                            
+
+
+
+
+
+
                             Double_t reco_xline[3] = {clusters_lay2[m][0], hp_xL1, clusters_lay0[n][0]};
                             Double_t reco_yline[3] = {clusters_lay2[m][1], hp_yL1, clusters_lay0[n][1]};
                             Double_t reco_zline[3] = {zL2, zL1, zL0};
-                            TPolyLine3D* recotr = new TPolyLine3D(3, reco_xline, reco_yline, reco_zline);
-                            recotr->SetLineColor(kBlue);  
-                            recotr->SetLineWidth(2);
-                            recotr->Draw();
-                            TMarker3DBox *err0 = new TMarker3DBox(reco_xline[0], reco_yline[0], reco_zline[0], 0.5, 0.5, 0, 0, 0); 
-                            err0->SetLineColor(kBlack);
-                            err0->Draw();
-                            TMarker3DBox *err1 = new TMarker3DBox(reco_xline[1], reco_yline[1], reco_zline[1], 0.5, 0.5, 0, 0, 0); 
-                            err1->SetLineColor(kBlack);
-                            err1->Draw();
-                            TMarker3DBox *err2 = new TMarker3DBox(reco_xline[2], reco_yline[2], reco_zline[2], 0.5, 0.5, 0, 0, 0);
-                            err2->SetLineColor(kBlack);
-                            err2->Draw();
+                            TPolyLine3D* reco_track = new TPolyLine3D(3, reco_xline, reco_yline, reco_zline);
+                            reco_track->SetLineColor(kBlue);
+                            reco_track->SetLineWidth(2);
+                            reco->cd();
+                            reco_track->Draw();
+                            hmrt++;
                             geom->cd();
                         }
                     }
@@ -701,6 +721,7 @@ void geometry() {
         
     }
 
+    //BISOGNA CONSIDERARE IL CASO IN CUI cluster_lay2.size() < cluster_lay0.size() !!!!!!!!!!!!!
 
     char file[200];
     sprintf(file,"geom");
@@ -718,9 +739,6 @@ void geometry() {
     htheta->Write();
     f.Close();
 
-    //double phi_max = pi/2;
-    //double phi_thetamax = TMath::ATan((-TR2Size[1]-(2.5*TR1Size[1]+2*TR1GapY))/(-(2*TR2Size[0]+1.5*TR2GapX)-TR1Size[0]/2));
-    //double theta_max = TMath::ATan((-(-(2*TR2Size[0]+1.5*TR2GapX)-TR1Size[0]/2))/(TMath::Cos(phi_thetamax)*(TR2CenterZ+TR2Size[2]/2)-TR1CenterZ-TR1Size[2]/2));
     if(track_generation){
         cout << "GENERIAMO LE TRACK UNENDO pTR2-qTR1" << endl;
     }
@@ -734,8 +752,10 @@ void geometry() {
     cout << "how many generated tracks hitted L2: " << hmgthL2 << endl;
     cout << "how many generated tracks hitted L1: " << hmgthL1 << endl;
     cout << "how many generated tracks hitted L0: " << hmgthL0 << endl;
+    cout << "how many generated tracks hitted each layer: " << hmgthL012 << endl;
     cout << "how many reco tracks: " << hmrt << endl;
-
+    double epsilon = hmgthL012/hmgt;
+    cout << "efficiency (data dalla geometria) : " << epsilon << endl;
 
 }
 
