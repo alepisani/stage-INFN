@@ -15,7 +15,7 @@
 #include <iostream>
 using namespace std;
 
-int events = 30;    //max 100000 otherwise my laptop explode!!  //now with 1000 starts to struggle
+int events = 300;    //max 100000 otherwise my laptop explode!!  //now with 1000 starts to struggle
 //puoi settare il seed for reproducibility
 TRandom3 *rnd = new TRandom3(10); 
 
@@ -50,7 +50,7 @@ double hmgthL0 = 0;        //how many generated tracks hitted L0
 double hmrt = 0;           //how many reco tracks
 double hmgthL012 = 0;      //how many generated tracks hitted all 3 layers
 double err_cl = 1;      //errore cluster fisso atm but have to change later on
-bool track_generation = true;    //true: generate tracks joining pTR2-qTR1 //false: generate tracks pTR2,theta,phi with appropriate distribution
+bool track_generation = false;    //true: generate tracks joining pTR2-qTR1 //false: generate tracks pTR2,theta,phi with appropriate distribution
 bool hitL2 = false; 
 bool hitL1 = false;
 bool hitL0 = false;
@@ -543,14 +543,14 @@ void geometry() {
     geom->cd();
 
     //TH1F(name, title, nbins, xlow, xup)
-    TH1F* hxTR2 = new TH1F("hxTR2", "x_trigger2", events, -TR2Size[0]*2.5, TR2Size[0]*2.5);
-    TH1F* hyTR2 = new TH1F("hyTR2", "y_trigger2 ", events, -TR2Size[1]/2, TR2Size[1]/2);
-    TH1F* hzTR2 = new TH1F("hzTR2", "z_trigger2 ", events, -TR2Size[2]/2+TR2CenterZ, TR2Size[2]/2+TR2CenterZ);
-    TH1F* hxTR1 = new TH1F("hxTR1", "x_trigger1", events, -TR1Size[0]/2, TR1Size[0]/2);
-    TH1F* hyTR1 = new TH1F("hyTR1", "y_trigger1", events, -TR1Size[1]*3, TR1Size[1]*3);
-    TH1F* hzTR1 = new TH1F("hzTR1", "z_trigger1 ", events, -TR1Size[2]/2+TR1CenterZ, TR1Size[2]/2+TR1CenterZ);
-    TH1F* hphi = new TH1F("hphi", "phi", events, -pi, pi);
-    TH1F* htheta = new TH1F("htheta", "theta", events, -pi/2, pi/2);
+    TH1F* hxTR2 = new TH1F("hxTR2", "x_trigger2;x_trigger1;counts", events, -TR2Size[0]*2.5, TR2Size[0]*2.5);
+    TH1F* hyTR2 = new TH1F("hyTR2", "y_trigger2;y_trigger1;counts", events, -TR2Size[1]/2, TR2Size[1]/2);
+    TH1F* hzTR2 = new TH1F("hzTR2", "z_trigger2;z_trigger2;counts", events, -TR2Size[2]/2+TR2CenterZ, TR2Size[2]/2+TR2CenterZ);
+    TH1F* hxTR1 = new TH1F("hxTR1", "x_trigger1;x_trigger1;counts", events, -TR1Size[0]/2, TR1Size[0]/2);
+    TH1F* hyTR1 = new TH1F("hyTR1", "y_trigger1;y_trigger1;counts", events, -TR1Size[1]*3, TR1Size[1]*3);
+    TH1F* hzTR1 = new TH1F("hzTR1", "z_trigger1;z_trigger1;counts", events, -TR1Size[2]/2+TR1CenterZ, TR1Size[2]/2+TR1CenterZ);
+    TH1F* hphi = new TH1F("hphi", "phi;#phi;counts", events, -pi, pi);
+    TH1F* htheta = new TH1F("htheta", "theta;#theta;counts", events, -pi/2, pi/2);
 
     //MC
     for (int i=0; i < events; i++,hmgt++,hitL2=false,hitL1=false,hitL0=false,clusters_lay2.clear(),clusters_lay1.clear(),clusters_lay0.clear(),clusters_for_fit.clear()){
@@ -577,8 +577,8 @@ void geometry() {
             zTR1 = rnd->Uniform(TR1CenterZ-TR1Thickness/2,TR1CenterZ+TR1Thickness/2);
 
             //uso ATan2 instead of ATan to avoid losing information
-            phi = TMath::ATan2((yTR2-yTR1),(xTR2-xTR1));
-            theta = TMath::ATan2((xTR1-xTR2),((TMath::Cos(phi))*(zTR2-zTR1)));   
+            phi = TMath::ATan2((yTR2-yTR1),(xTR2-xTR1));   
+            theta = TMath::ATan2(TMath::Hypot(xTR1-xTR2,yTR1-yTR2),zTR2-zTR1);
 
             hmgthTR1++;
         }  
