@@ -57,6 +57,29 @@ bool hitL0 = false;
 vector<vector<double>> clusters_lay2 = {};     //insieme di tutti i cluster presenti sul layer 2
 vector<vector<double>> clusters_lay1 = {};     //insieme di tutti i cluster presenti sul layer 1
 vector<vector<double>> clusters_lay0 = {};     //insieme di tutti i cluster presenti sul layer 0
+vector<vector<vector<double>>> clusters_for_fit = {};  //cluster delle 3 coordinate pL2, qL1, tL0
+ 
+
+
+double fct(const vector<vector<double>> &clusters_lay, const double *par)
+{
+  double xL2 = par[0];
+  double yL2 = par[1];
+  double theta = par[2];
+  double phi = par[3];
+
+  double chi2 = 0.0;
+  for (int i = 0; i < 3; i++)
+  {
+    double x_fit = xL2 + (clusters_lay[i][2] - StaveZ[0]) * TMath::Tan(theta) * TMath::Cos(phi);
+    double y_fit = yL2 + (clusters_lay[i][2] - StaveZ[0]) * TMath::Tan(theta) * TMath::Sin(phi);
+    double dx = (clusters_lay[i][0] - x_fit) / clusters_lay[i][3];
+    double dy = (clusters_lay[i][1] - y_fit) / clusters_lay[i][4];
+    chi2 += dx * dx + dy * dy;
+  }
+
+  return chi2;
+};
 
 
 
@@ -530,7 +553,7 @@ void geometry() {
     TH1F* htheta = new TH1F("htheta", "theta", events, -pi/2, pi/2);
 
     //MC
-    for (int i=0; i < events; i++,hmgt++,hitL2=false,hitL1=false,hitL0=false,clusters_lay2.clear(),clusters_lay1.clear(),clusters_lay0.clear()){
+    for (int i=0; i < events; i++,hmgt++,hitL2=false,hitL1=false,hitL0=false,clusters_lay2.clear(),clusters_lay1.clear(),clusters_lay0.clear(),clusters_for_fit.clear()){
         double xTR2, yTR2, zTR2, xTR1, yTR1, zTR1, phi, theta; 
 
         //i layer acquisiscono il segnale quando arriva un segnale AND dagli scintillatori
@@ -680,13 +703,16 @@ void geometry() {
         geom->cd();
 
 
-        vector<double> cl_lay2 = {xL2, yL2, zL2};
-        vector<double> cl_lay1 = {xL1, yL1, zL1};
-        vector<double> cl_lay0 = {xL0, yL0, zL0};
+        vector<double> cl_lay2 = {xL2, yL2, zL2, err_cl, err_cl, 0};
+        vector<double> cl_lay1 = {xL1, yL1, zL1, err_cl, err_cl, 0};
+        vector<double> cl_lay0 = {xL0, yL0, zL0, err_cl, err_cl, 0};
         if(hitL2 && hitL1 && hitL0){
             clusters_lay2.push_back(cl_lay2);
             clusters_lay1.push_back(cl_lay1);
             clusters_lay0.push_back(cl_lay0);
+            clusters_for_fit.push_back(clusters_lay2);
+            clusters_for_fit.push_back(clusters_lay1);
+            clusters_for_fit.push_back(clusters_lay0);
             hmgthL012++;
             
             for(int m=0; m<clusters_lay2.size(); m++){
@@ -697,14 +723,82 @@ void geometry() {
                     for(int l=0; l<clusters_lay1.size(); l++){
                         if(hp_xL1 == clusters_lay1[l][0] && hp_yL1 == clusters_lay1[l][1]){
                             
-
-
-
-
-
-
+                            //metedo grezzo senza considerare errori nel cluster, non funge
+                            hmrt++;
+                            reco->cd();
                             Double_t reco_xline[3] = {clusters_lay2[m][0], hp_xL1, clusters_lay0[n][0]};
                             Double_t reco_yline[3] = {clusters_lay2[m][1], hp_yL1, clusters_lay0[n][1]};
+                            Double_t reco_zline[3] = {StaveZ[2], StaveZ[1], StaveZ[0]};
+                            TPolyLine3D* reco = new TPolyLine3D(3, reco_xline, reco_yline, reco_zline);
+                            reco->SetLineColor(kBlue);  
+                            reco->SetLineWidth(2);
+                            reco->Draw();
+                            TMarker3DBox *err0 = new TMarker3DBox(reco_xline[0], reco_yline[0], reco_zline[0], err_cl, err_cl, 0, 0, 0); 
+                            err0->SetLineColor(kBlack);
+                            err0->Draw();
+                            TMarker3DBox *err1 = new TMarker3DBox(reco_xline[1], reco_yline[1], reco_zline[1], err_cl, err_cl, 0, 0, 0); 
+                            err1->SetLineColor(kBlack);
+                            err1->Draw();
+                            TMarker3DBox *err2 = new TMarker3DBox(reco_xline[2], reco_yline[2], reco_zline[2], err_cl, err_cl, 0, 0, 0); 
+                            err2->SetLineColor(kBlack);
+                            err2->Draw();
+                            geom->cd();
+                            
+                            
+                            
+                            /*
+                            //FIT
+                            ROOT::Math::Minimizer *min = ROOT::Math::Factory::CreateMinimizer("Minuit2", "");
+                            min->SetMaxFunctionCalls(1000000); // for Minuit/Minuit2
+                            min->SetMaxIterations(10000);      // for GSL
+                            min->SetTolerance(0.01);
+                            min->SetPrintLevel(0);
+                            
+                            // Create a lambda function that wraps the unbound function and matches the expected signature
+                            auto boundFct = [&clusters_for_fit](const double* params) {
+                                return fct(clusters_for_fit, params);
+                            };
+
+                            // Create the ROOT::Math::Functor using the lambda function
+                            ROOT::Math::Functor functor(boundFct, 4);
+
+                            // Assign the functor to the minimizer
+                            min->SetFunction(functor);
+                          
+                            // Set the initial parameter values and step sizes
+                            double variable[4] = {0.0, 0.0, 0.0, 0.0};
+                            double step[4] = {0.01, 0.01, 0.01, 0.01};
+                          
+                            min->SetVariable(0, "x0", variable[0], step[0]);
+                            min->SetVariable(1, "y0", variable[1], step[1]);
+                            min->SetLimitedVariable(2, "theta", variable[2], step[2], 0., TMath::Pi() / 2);
+                            min->SetLimitedVariable(3, "phi", variable[3], step[3], -1 * TMath::Pi(), TMath::Pi());
+                          
+                            // Perform minimisation
+                            min->Minimize();
+                          
+                            const double *params = min->X();
+                            const double *errors = min->Errors();
+                          
+                            // Set the fitted values, errors, and chi-square in the LTrackCandidate object
+                            double xL2_fit = params[0];
+                            double yL2_fit = params[1];
+                            double zL2_fit = StaveZ[2];
+                            double theta_fit = params[2]; 
+                            double phi_fit = params[3]; 
+                            double err_xL2_fit = errors[0];
+                            double err_yL2_fit = errors[1];
+                            double err_theta_fit = errors[2]; 
+                            double err_phi_fit = errors[3]; 
+                            double chi_fit = min->MinValue();
+
+                            double xL1_fit = xL2_fit + (StaveZ[2]-StaveZ[1])*(TMath::Tan(theta))*(TMath::Cos(phi));
+                            double yL1_fit = yL2_fit + (StaveZ[2]-StaveZ[1])*(TMath::Tan(theta))*(TMath::Sin(phi));
+                            double xL0_fit = xL2_fit + (StaveZ[2]-StaveZ[0])*(TMath::Tan(theta))*(TMath::Cos(phi));
+                            double yL0_fit = yL2_fit + (StaveZ[2]-StaveZ[0])*(TMath::Tan(theta))*(TMath::Sin(phi)); 
+
+                            Double_t reco_xline[3] = {xL2_fit, xL1_fit, xL0_fit};
+                            Double_t reco_yline[3] = {yL2_fit, yL1_fit, yL0_fit};
                             Double_t reco_zline[3] = {zL2, zL1, zL0};
                             TPolyLine3D* reco_track = new TPolyLine3D(3, reco_xline, reco_yline, reco_zline);
                             reco_track->SetLineColor(kBlue);
@@ -713,6 +807,7 @@ void geometry() {
                             reco_track->Draw();
                             hmrt++;
                             geom->cd();
+                            */
                         }
                     }
                 }
